@@ -2,15 +2,29 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
+
+    public const ROLES = [
+        'super_admin',
+        'sales_manager',
+        'sales_executive',
+        'production_manager',
+        'production_engineer',
+        'purchase_manager',
+        'store_manager',
+        'quality_manager',
+        'service_manager',
+        'field_service_engineer',
+        'accounts',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +35,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'department',
+        'phone',
+        'active',
     ];
 
     /**
@@ -43,6 +61,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'active' => 'boolean',
         ];
+    }
+
+    public static function randomOfRole(string $role): self
+    {
+        return self::where('role', $role)->inRandomOrder()->first()
+            ?? self::inRandomOrder()->first();
     }
 }
