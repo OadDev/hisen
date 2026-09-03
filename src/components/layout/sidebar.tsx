@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronDown, PanelLeftClose, PanelLeftOpen, Factory } from 'lucide-react'
+import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { NAV_GROUPS, filterNavByRole, type NavItem } from '@/lib/navigation'
 import { useAuthStore } from '@/stores/auth-store'
 import { useUiStore } from '@/stores/ui-store'
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { LogoMark } from '@/components/shared/logo-mark'
 
 function isActive(pathname: string, item: NavItem): boolean {
   if (item.to && (pathname === item.to || pathname.startsWith(item.to + '/'))) return true
@@ -119,9 +120,7 @@ export function Sidebar() {
       )}
     >
       <div className={cn('flex h-14 items-center gap-2 border-b border-sidebar-border px-4', collapsed && 'justify-center px-0')}>
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <Factory className="size-4" />
-        </span>
+        <LogoMark className="size-7 text-primary" />
         {!collapsed && (
           <div className="leading-tight">
             <p className="text-sm font-semibold text-sidebar-foreground">Hisen Machinery</p>

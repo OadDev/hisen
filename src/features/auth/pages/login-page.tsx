@@ -1,9 +1,11 @@
+import type { CSSProperties } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { Factory, Loader2, Eye, EyeOff, BarChart3, ShieldCheck, Workflow } from 'lucide-react'
+import { Loader2, Eye, EyeOff, BarChart3, ShieldCheck, Workflow } from 'lucide-react'
+import { LogoMark } from '@/components/shared/logo-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -74,9 +76,7 @@ export function LoginPage() {
           }}
         />
         <div className="relative flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-white/15">
-            <Factory className="size-5" />
-          </span>
+          <LogoMark className="size-9 text-white" style={{ '--logo-stripe': 'var(--primary)' } as CSSProperties} />
           <span className="text-lg font-semibold">Hisen Machinery ERP</span>
         </div>
         <div className="relative flex flex-col gap-8">
@@ -105,9 +105,7 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="mb-8 flex flex-col gap-1.5 lg:hidden">
             <div className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Factory className="size-4" />
-              </span>
+              <LogoMark className="size-8 text-primary" />
               <span className="text-base font-semibold">Hisen Machinery</span>
             </div>
           </div>
