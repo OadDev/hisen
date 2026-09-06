@@ -1,18 +1,21 @@
 import { useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Trash2 } from 'lucide-react'
+import { Trash2, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EntityToolbar } from '@/components/shared/entity-toolbar'
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { EmptyState } from '@/components/shared/empty-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { CUSTOMERS, accountOwnerName, type Customer } from '@/mock/customers'
+import { useCustomers, type Customer } from '@/features/customers/api'
 import { formatCurrency, initials } from '@/lib/utils'
 
 export function CustomersPage() {
   const navigate = useNavigate()
+  const { data, isLoading, isError, error } = useCustomers({ per_page: 100 })
 
   const columns: ColumnDef<Customer>[] = [
     {
@@ -31,7 +34,7 @@ export function CustomersPage() {
       ),
     },
     { accessorKey: 'industry', header: 'Industry', cell: ({ row }) => <Badge variant="outline">{row.original.industry}</Badge> },
-    { id: 'owner', header: 'Account Owner', accessorFn: (row) => accountOwnerName(row) },
+    { id: 'owner', header: 'Account Owner', accessorFn: (row) => row.accountOwner ?? '—' },
     {
       accessorKey: 'lifetimeValue',
       header: 'Lifetime Value',
@@ -52,18 +55,24 @@ export function CustomersPage() {
         description="Manage companies, branches, contacts, and account history."
         actions={<EntityToolbar newLabel="New Customer" onNew={() => {}} />}
       />
-      <DataTable
-        columns={columns}
-        data={CUSTOMERS}
-        enableSelection
-        searchPlaceholder="Search customers..."
-        emptyTitle="No customers found"
-        bulkActions={(selected) => (
-          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-            <Trash2 /> Delete ({selected.length})
-          </Button>
-        )}
-      />
+      {isLoading ? (
+        <PageSkeleton />
+      ) : isError ? (
+        <EmptyState icon={AlertTriangle} title="Couldn't load customers" description={error.message} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data?.data ?? []}
+          enableSelection
+          searchPlaceholder="Search customers..."
+          emptyTitle="No customers found"
+          bulkActions={(selected) => (
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+              <Trash2 /> Delete ({selected.length})
+            </Button>
+          )}
+        />
+      )}
     </div>
   )
 }

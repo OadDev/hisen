@@ -1,14 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Factory, PackageCheck, Wrench, Receipt } from 'lucide-react'
+import { ArrowLeft, Factory, PackageCheck, Wrench, Receipt, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { EmptyState } from '@/components/shared/empty-state'
-import { salesOrderById, customerForOrder } from '@/mock/sales-orders'
-import { quotationById, quotationTotal } from '@/mock/quotations'
-import { staffById } from '@/mock/staff'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { useSalesOrder } from '@/features/sales-orders/api'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 const STAGES = [
@@ -21,15 +20,25 @@ const STAGES = [
 export function SalesOrderDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const order = id ? salesOrderById(id) : undefined
+  const { data: order, isLoading, isError, error } = useSalesOrder(id)
 
-  if (!order) {
-    return <EmptyState title="Sales order not found" description="This order may have been removed." />
+  if (isLoading) {
+    return <PageSkeleton />
   }
 
-  const customer = customerForOrder(order)
-  const quotation = quotationById(order.quotationId)
-  const owner = staffById(order.ownerId)
+  if (isError || !order) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="Sales order not found"
+        description={error?.message ?? 'This order may have been removed.'}
+      />
+    )
+  }
+
+  const customer = order.customer
+  const owner = order.owner
+  const quotation = order.quotation
   const currentStageIndex = STAGES.findIndex((s) => s.key === order.status)
   const balance = order.orderValue - order.advancePaid
 
@@ -82,7 +91,7 @@ export function SalesOrderDetailPage() {
                   ))}
                   <div className="flex items-center justify-between pt-2 text-sm font-semibold">
                     <span>Total Order Value</span>
-                    <span>{formatCurrency(quotationTotal(quotation).total, order.currency)}</span>
+                    <span>{formatCurrency(order.orderValue, order.currency)}</span>
                   </div>
                 </div>
               ) : (
@@ -119,7 +128,7 @@ export function SalesOrderDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Shipment & Installation</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Expected Dispatch</span><span className="font-medium">{formatDate(order.expectedDispatch)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Expected Dispatch</span><span className="font-medium">{order.expectedDispatch ? formatDate(order.expectedDispatch) : '—'}</span></div>
               <Button variant="outline" size="sm" onClick={() => navigate('/dispatch')}>View Dispatch Plan</Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/installation')}>View Installation Schedule</Button>
             </CardContent>

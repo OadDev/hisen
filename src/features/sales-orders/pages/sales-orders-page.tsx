@@ -1,15 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
+import { AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EntityToolbar } from '@/components/shared/entity-toolbar'
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { EmptyState } from '@/components/shared/empty-state'
 import { Progress } from '@/components/ui/progress'
-import { SALES_ORDERS, customerForOrder, type SalesOrder } from '@/mock/sales-orders'
+import { useSalesOrders, type SalesOrder } from '@/features/sales-orders/api'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 export function SalesOrdersPage() {
   const navigate = useNavigate()
+  const { data, isLoading, isError, error } = useSalesOrders({ per_page: 100 })
 
   const columns: ColumnDef<SalesOrder>[] = [
     {
@@ -21,7 +25,7 @@ export function SalesOrdersPage() {
         </button>
       ),
     },
-    { id: 'customer', header: 'Customer', accessorFn: (row) => customerForOrder(row)?.name ?? '—' },
+    { id: 'customer', header: 'Customer', accessorFn: (row) => row.customer?.name ?? '—' },
     { accessorKey: 'orderDate', header: 'Order Date', cell: ({ row }) => formatDate(row.original.orderDate) },
     { accessorKey: 'orderValue', header: 'Value', cell: ({ row }) => formatCurrency(row.original.orderValue, row.original.currency) },
     {
@@ -45,7 +49,13 @@ export function SalesOrdersPage() {
         description="Confirmed orders from quotation through dispatch and installation."
         actions={<EntityToolbar newLabel="New Sales Order" onNew={() => {}} />}
       />
-      <DataTable columns={columns} data={SALES_ORDERS} enableSelection searchPlaceholder="Search sales orders..." />
+      {isLoading ? (
+        <PageSkeleton />
+      ) : isError ? (
+        <EmptyState icon={AlertTriangle} title="Couldn't load sales orders" description={error.message} />
+      ) : (
+        <DataTable columns={columns} data={data?.data ?? []} enableSelection searchPlaceholder="Search sales orders..." />
+      )}
     </div>
   )
 }

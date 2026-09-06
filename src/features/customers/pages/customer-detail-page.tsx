@@ -1,23 +1,34 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, FileText, Cog, ShieldCheck, Headphones, Mail, Phone } from 'lucide-react'
+import { ArrowLeft, MapPin, FileText, Cog, ShieldCheck, Headphones, Mail, Phone, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { customerById, accountOwnerName } from '@/mock/customers'
+import { useCustomer } from '@/features/customers/api'
 import { formatCurrency, formatDate, initials } from '@/lib/utils'
 
 export function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const customer = id ? customerById(id) : undefined
+  const { data: customer, isLoading, isError, error } = useCustomer(id)
 
-  if (!customer) {
-    return <EmptyState title="Customer not found" description="This customer record may have been removed." />
+  if (isLoading) {
+    return <PageSkeleton />
+  }
+
+  if (isError || !customer) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="Customer not found"
+        description={error?.message ?? 'This customer record may have been removed.'}
+      />
+    )
   }
 
   return (
@@ -77,7 +88,7 @@ export function CustomerDetailPage() {
                 <div><p className="text-muted-foreground">GSTIN</p><p className="mt-1 font-medium">{customer.gstin}</p></div>
                 <div><p className="text-muted-foreground">PAN</p><p className="mt-1 font-medium">{customer.panNumber}</p></div>
                 <div><p className="text-muted-foreground">Currency</p><p className="mt-1 font-medium">{customer.currency}</p></div>
-                <div><p className="text-muted-foreground">Account Owner</p><p className="mt-1 font-medium">{accountOwnerName(customer)}</p></div>
+                <div><p className="text-muted-foreground">Account Owner</p><p className="mt-1 font-medium">{customer.accountOwner ?? '—'}</p></div>
                 <div><p className="text-muted-foreground">Customer Since</p><p className="mt-1 font-medium">{formatDate(customer.createdAt)}</p></div>
               </CardContent>
             </Card>

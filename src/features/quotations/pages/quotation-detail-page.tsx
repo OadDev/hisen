@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, MessageCircle, Printer, ShoppingCart, History, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowLeft, Mail, MessageCircle, Printer, ShoppingCart, History, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,24 +8,49 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
-import { quotationById, quotationTotal } from '@/mock/quotations'
-import { customerById } from '@/mock/customers'
-import { staffById } from '@/mock/staff'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { useQuotation, useConvertQuotationToSalesOrder } from '@/features/quotations/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api-client'
 
 export function QuotationDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const quotation = id ? quotationById(id) : undefined
+  const { data: quotation, isLoading, isError, error } = useQuotation(id)
+  const convert = useConvertQuotationToSalesOrder()
 
-  if (!quotation) {
-    return <EmptyState title="Quotation not found" description="This quotation may have been removed." />
+  if (isLoading) {
+    return <PageSkeleton />
   }
 
-  const customer = customerById(quotation.customerId)
-  const owner = staffById(quotation.ownerId)
-  const totals = quotationTotal(quotation)
+  if (isError || !quotation) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="Quotation not found"
+        description={error?.message ?? 'This quotation may have been removed.'}
+      />
+    )
+  }
+
+  const customer = quotation.customer
+  const owner = quotation.owner
+
+  const subtotal = quotation.lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice * (1 - li.discountPct / 100), 0)
+  const afterDiscount = subtotal * (1 - quotation.discountPct / 100)
+  const tax = afterDiscount * (quotation.taxPct / 100)
+
+  async function handleConvert() {
+    if (!id) return
+    try {
+      await convert.mutateAsync(id)
+      toast.success('Sales order created')
+      navigate('/sales-orders')
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to convert quotation')
+    }
+  }
 
   return (
     <div>
@@ -42,7 +67,7 @@ export function QuotationDetailPage() {
             <Button size="sm" variant="outline"><Mail /> Email</Button>
             <Button size="sm" variant="outline"><MessageCircle /> WhatsApp</Button>
             {quotation.status !== 'won' && (
-              <Button size="sm" onClick={() => { toast.success('Sales order created'); navigate('/sales-orders') }}>
+              <Button size="sm" onClick={handleConvert} disabled={convert.isPending}>
                 <ShoppingCart /> Convert to Sales Order
               </Button>
             )}
@@ -82,10 +107,10 @@ export function QuotationDetailPage() {
                 </TableBody>
               </Table>
               <div className="mt-4 ml-auto flex max-w-xs flex-col gap-1.5 text-sm">
-                <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatCurrency(totals.subtotal, quotation.currency)}</span></div>
-                <div className="flex justify-between text-muted-foreground"><span>Discount ({quotation.discountPct}%)</span><span>-{formatCurrency(totals.subtotal - totals.afterDiscount, quotation.currency)}</span></div>
-                <div className="flex justify-between text-muted-foreground"><span>Tax ({quotation.taxPct}%)</span><span>{formatCurrency(totals.tax, quotation.currency)}</span></div>
-                <div className="flex justify-between border-t pt-1.5 text-base font-semibold"><span>Total</span><span>{formatCurrency(totals.total, quotation.currency)}</span></div>
+                <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatCurrency(subtotal, quotation.currency)}</span></div>
+                <div className="flex justify-between text-muted-foreground"><span>Discount ({quotation.discountPct}%)</span><span>-{formatCurrency(subtotal - afterDiscount, quotation.currency)}</span></div>
+                <div className="flex justify-between text-muted-foreground"><span>Tax ({quotation.taxPct}%)</span><span>{formatCurrency(tax, quotation.currency)}</span></div>
+                <div className="flex justify-between border-t pt-1.5 text-base font-semibold"><span>Total</span><span>{formatCurrency(quotation.total, quotation.currency)}</span></div>
               </div>
             </CardContent>
           </Card>
@@ -110,7 +135,7 @@ export function QuotationDetailPage() {
                             <span className="text-xs text-muted-foreground">{formatDateTime(v.updatedAt)}</span>
                           </div>
                           <p className="text-sm text-muted-foreground">{v.note}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">by {v.updatedBy}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">by {v.updatedBy?.name ?? 'System'}</p>
                         </div>
                       </div>
                     ))}
@@ -150,9 +175,9 @@ export function QuotationDetailPage() {
             <CardHeader><CardTitle className="text-base">Quotation Details</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Created</span><span className="font-medium">{formatDate(quotation.createdAt)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Valid Until</span><span className="font-medium">{formatDate(quotation.validUntil)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Valid Until</span><span className="font-medium">{quotation.validUntil ? formatDate(quotation.validUntil) : '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Currency</span><span className="font-medium">{quotation.currency}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Owner</span><span className="font-medium">{owner?.name}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Owner</span><span className="font-medium">{owner?.name ?? '—'}</span></div>
             </CardContent>
           </Card>
           {customer && (
@@ -163,7 +188,6 @@ export function QuotationDetailPage() {
                   {customer.name}
                 </button>
                 <p className="text-muted-foreground">{customer.industry}</p>
-                <p className="text-muted-foreground">{customer.branches[0]?.city}, {customer.branches[0]?.country}</p>
               </CardContent>
             </Card>
           )}

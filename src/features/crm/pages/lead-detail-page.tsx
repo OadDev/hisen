@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Phone, Mail, MessageCircle, Calendar, FileText, Building2 } from 'lucide-react'
+import { ArrowLeft, Phone, Mail, MessageCircle, Calendar, FileText, Building2, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +10,8 @@ import { Timeline, type TimelineEvent } from '@/components/shared/timeline'
 import { CommentsPanel } from '@/components/shared/comments-panel'
 import { AttachmentsPanel } from '@/components/shared/attachments-panel'
 import { EmptyState } from '@/components/shared/empty-state'
-import { leadById, leadOwnerName } from '@/mock/leads'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { useLead } from '@/features/crm/api'
 import { formatCurrency, formatDate, formatDateTime, initials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -19,18 +20,30 @@ const ACTIVITY_ICONS = { call: Phone, meeting: Calendar, email: Mail, whatsapp: 
 export function LeadDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const lead = id ? leadById(id) : undefined
+  const { data: lead, isLoading, isError, error } = useLead(id)
 
-  if (!lead) {
-    return <EmptyState title="Lead not found" description="This lead may have been removed." />
+  if (isLoading) {
+    return <PageSkeleton />
   }
 
-  const events: TimelineEvent[] = lead.activities.map((a) => ({
-    id: a.id,
+  if (isError || !lead) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="Lead not found"
+        description={error?.message ?? 'This lead may have been removed.'}
+      />
+    )
+  }
+
+  const ownerName = lead.owner?.name ?? 'Unassigned'
+
+  const events: TimelineEvent[] = (lead.activities ?? []).map((a) => ({
+    id: String(a.id),
     title: a.title,
-    description: a.description,
-    timestamp: a.timestamp,
-    actor: a.actor,
+    description: a.description ?? undefined,
+    timestamp: a.occurredAt,
+    actor: a.actor?.name,
     icon: ACTIVITY_ICONS[a.type],
     tone: a.type === 'stage-change' ? 'success' : 'default',
   }))
@@ -75,7 +88,7 @@ export function LeadDetailPage() {
               </div>
               <div>
                 <p className="text-muted-foreground">Owner</p>
-                <p className="mt-1 font-medium">{leadOwnerName(lead)}</p>
+                <p className="mt-1 font-medium">{ownerName}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Created</p>
@@ -113,7 +126,7 @@ export function LeadDetailPage() {
                 <CardContent className="pt-6">
                   <CommentsPanel
                     comments={[
-                      { id: 'c1', author: leadOwnerName(lead), message: 'Customer is comparing with two other vendors. Sending a revised techno-commercial proposal.', timestamp: lead.lastActivityAt },
+                      { id: 'c1', author: ownerName, message: 'Customer is comparing with two other vendors. Sending a revised techno-commercial proposal.', timestamp: lead.createdAt },
                     ]}
                   />
                 </CardContent>
@@ -124,8 +137,8 @@ export function LeadDetailPage() {
                 <CardContent className="pt-6">
                   <AttachmentsPanel
                     attachments={[
-                      { id: 'a1', name: 'Technical_Proposal_v2.pdf', type: 'pdf', size: '1.4 MB', uploadedBy: leadOwnerName(lead), uploadedAt: lead.lastActivityAt },
-                      { id: 'a2', name: 'Site_Photos.zip', type: 'doc', size: '8.2 MB', uploadedBy: leadOwnerName(lead), uploadedAt: lead.createdAt },
+                      { id: 'a1', name: 'Technical_Proposal_v2.pdf', type: 'pdf', size: '1.4 MB', uploadedBy: ownerName, uploadedAt: lead.createdAt },
+                      { id: 'a2', name: 'Site_Photos.zip', type: 'doc', size: '8.2 MB', uploadedBy: ownerName, uploadedAt: lead.createdAt },
                     ]}
                   />
                 </CardContent>

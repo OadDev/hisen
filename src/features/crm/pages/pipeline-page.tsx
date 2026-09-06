@@ -1,19 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { LEADS, PIPELINE_STAGES, leadOwnerName, type Lead, type LeadStage } from '@/mock/leads'
+import { useLeads, useUpdateLeadStage, type Lead, type LeadStage } from '@/features/crm/api'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { EmptyState } from '@/components/shared/empty-state'
 import { cn, formatCurrency, initials } from '@/lib/utils'
-import { List } from 'lucide-react'
+import { List, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 
+const PIPELINE_STAGES: LeadStage[] = ['Lead', 'Discussion', 'Technical Proposal', 'Quotation', 'Negotiation', 'Advance', 'Won']
+
 export function PipelinePage() {
   const navigate = useNavigate()
-  const [leads, setLeads] = useState<Lead[]>(() => LEADS.filter((l) => l.stage !== 'Lost'))
+  const { data, isLoading, isError, error } = useLeads({ per_page: 100 })
+  const updateStage = useUpdateLeadStage()
+  const [leads, setLeads] = useState<Lead[]>([])
   const [dragging, setDragging] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (data) setLeads(data.data.filter((l) => l.stage !== 'Lost'))
+  }, [data])
 
   const columns = useMemo(() => {
     const map = new Map<LeadStage, Lead[]>()
@@ -24,6 +34,7 @@ export function PipelinePage() {
 
   function moveLead(id: string, stage: LeadStage) {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, stage } : l)))
+    updateStage.mutate({ id, stage })
   }
 
   return (
@@ -39,6 +50,11 @@ export function PipelinePage() {
           </Button>
         }
       />
+      {isLoading ? (
+        <PageSkeleton />
+      ) : isError ? (
+        <EmptyState icon={AlertTriangle} title="Couldn't load pipeline" description={error.message} />
+      ) : (
       <div className="flex flex-1 gap-3 overflow-x-auto pb-4">
         {PIPELINE_STAGES.map((stage) => {
           const items = columns.get(stage) ?? []
@@ -75,7 +91,7 @@ export function PipelinePage() {
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-sm font-semibold">{formatCurrency(lead.estimatedValue)}</span>
                       <Avatar className="size-6">
-                        <AvatarFallback className="text-[10px]">{initials(leadOwnerName(lead))}</AvatarFallback>
+                        <AvatarFallback className="text-[10px]">{initials(lead.owner?.name ?? 'Unassigned')}</AvatarFallback>
                       </Avatar>
                     </div>
                   </Card>
@@ -88,6 +104,7 @@ export function PipelinePage() {
           )
         })}
       </div>
+      )}
     </div>
   )
 }

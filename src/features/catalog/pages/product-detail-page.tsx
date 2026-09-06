@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileText, ShieldCheck, Truck, Wand2 } from 'lucide-react'
+import { ArrowLeft, FileText, ShieldCheck, Truck, Wand2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -7,16 +7,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ProductThumbnail } from '@/components/shared/product-thumbnail'
 import { EmptyState } from '@/components/shared/empty-state'
-import { productById } from '@/mock/products'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { useProduct } from '@/features/catalog/api'
 import { formatCurrency } from '@/lib/utils'
 
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const product = id ? productById(id) : undefined
+  const { data: product, isLoading, isError, error } = useProduct(id)
 
-  if (!product) {
-    return <EmptyState title="Product not found" description="This product may have been removed from the catalog." />
+  if (isLoading) {
+    return <PageSkeleton />
+  }
+
+  if (isError || !product) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="Product not found"
+        description={error?.message ?? 'This product may have been removed from the catalog.'}
+      />
+    )
   }
 
   return (
@@ -27,10 +38,10 @@ export function ProductDetailPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <ProductThumbnail seed={product.imageSeed} category={product.category} className="aspect-square w-full" />
+          <ProductThumbnail seed={product.sku} category={product.category} className="aspect-square w-full" />
           <div className="mt-3 grid grid-cols-4 gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <ProductThumbnail key={i} seed={`${product.imageSeed}-${i}`} category={product.category} className="aspect-square" />
+              <ProductThumbnail key={i} seed={`${product.sku}-${i}`} category={product.category} className="aspect-square" />
             ))}
           </div>
         </div>
@@ -39,7 +50,7 @@ export function ProductDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">{product.subCategory}</Badge>
             <StatusBadge status={product.status} />
-            {product.certifications.map((c) => (
+            {(product.certifications ?? []).map((c) => (
               <Badge key={c} variant="secondary">{c}</Badge>
             ))}
           </div>
@@ -93,7 +104,7 @@ export function ProductDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Technical Specifications</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-              {Object.entries(product.specs).map(([key, value]) => (
+              {Object.entries(product.specs ?? {}).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between border-b pb-2 text-sm">
                   <span className="text-muted-foreground">{key}</span>
                   <span className="font-medium">{value}</span>

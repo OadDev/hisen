@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAuthStore } from '@/stores/auth-store'
-import { STAFF } from '@/mock/staff'
-import { ROLES, type Role } from '@/types/rbac'
+import { ApiError } from '@/lib/api-client'
 import { toast } from 'sonner'
 
 const schema = z.object({
@@ -22,8 +21,6 @@ const schema = z.object({
 })
 
 type FormValues = z.infer<typeof schema>
-
-const DEMO_ROLES: Role[] = ['super_admin', 'sales_manager', 'production_manager', 'store_manager', 'service_manager', 'accounts']
 
 export function LoginPage() {
   const login = useAuthStore((s) => s.login)
@@ -35,32 +32,25 @@ export function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
     setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: 'arvind.rao@hisenmachinery.com', password: '', remember: true },
+    defaultValues: { email: '', password: '', remember: true },
   })
 
-  function authenticate(email: string) {
-    const staff = STAFF.find((s) => s.email === email) ?? STAFF[0]
+  async function onSubmit(values: FormValues) {
     setLoading(true)
-    setTimeout(() => {
-      login({ id: staff.id, name: staff.name, email: staff.email, role: staff.role, department: staff.department })
-      setLoading(false)
-      toast.success(`Welcome back, ${staff.name.split(' ')[0]}`)
+    try {
+      await login(values.email, values.password)
+      toast.success('Welcome back')
       navigate('/dashboard/executive')
-    }, 500)
-  }
-
-  function onSubmit(values: FormValues) {
-    authenticate(values.email)
-  }
-
-  function quickLogin(role: Role) {
-    const staff = STAFF.find((s) => s.role === role)
-    if (staff) {
-      setValue('email', staff.email)
-      authenticate(staff.email)
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Unable to sign in. Please try again.'
+      setError('password', { message })
+      toast.error(message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -151,21 +141,6 @@ export function LoginPage() {
               Sign in
             </Button>
           </form>
-
-          <div className="mt-8 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Preview as (demo)</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_ROLES.map((role) => (
-                <Button key={role} type="button" variant="outline" size="sm" onClick={() => quickLogin(role)} className="justify-start">
-                  {ROLES[role].label}
-                </Button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

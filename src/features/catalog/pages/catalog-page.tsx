@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LayoutGrid, List, Video, FileBadge, Wand2 } from 'lucide-react'
+import { LayoutGrid, List, Video, FileBadge, Wand2, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EntityToolbar } from '@/components/shared/entity-toolbar'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -11,7 +11,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ProductThumbnail } from '@/components/shared/product-thumbnail'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { PRODUCTS, type ProductCategory } from '@/mock/products'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { EmptyState } from '@/components/shared/empty-state'
+import { useProducts, type ProductCategory } from '@/features/catalog/api'
 import { formatCurrency } from '@/lib/utils'
 
 const CATEGORIES: (ProductCategory | 'All')[] = ['All', 'Machines', 'Accessories', 'Consumables', 'Spare Parts']
@@ -22,11 +24,12 @@ export function CatalogPage() {
   const [query, setQuery] = useState('')
   const [view, setView] = useState<'grid' | 'list'>('grid')
 
-  const filtered = useMemo(
-    () =>
-      PRODUCTS.filter((p) => (category === 'All' || p.category === category) && p.name.toLowerCase().includes(query.toLowerCase())),
-    [category, query],
-  )
+  const { data, isLoading, isError, error } = useProducts({
+    per_page: 200,
+    category: category === 'All' ? undefined : category,
+    search: query || undefined,
+  })
+  const filtered = data?.data ?? []
 
   return (
     <div>
@@ -69,7 +72,11 @@ export function CatalogPage() {
         </div>
       </div>
 
-      {view === 'grid' ? (
+      {isLoading ? (
+        <PageSkeleton />
+      ) : isError ? (
+        <EmptyState icon={AlertTriangle} title="Couldn't load products" description={error.message} />
+      ) : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((product) => (
             <Card
@@ -77,7 +84,7 @@ export function CatalogPage() {
               className="cursor-pointer gap-3 overflow-hidden py-0 transition-shadow hover:shadow-md"
               onClick={() => navigate(`/catalog/${product.id}`)}
             >
-              <ProductThumbnail seed={product.imageSeed} category={product.category} className="h-40 rounded-none" />
+              <ProductThumbnail seed={product.sku} category={product.category} className="h-40 rounded-none" />
               <CardContent className="px-4 pb-4">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium leading-tight">{product.name}</p>
@@ -103,7 +110,7 @@ export function CatalogPage() {
               onClick={() => navigate(`/catalog/${product.id}`)}
               className="flex items-center gap-4 px-4 py-3 text-left hover:bg-accent/50"
             >
-              <ProductThumbnail seed={product.imageSeed} category={product.category} className="size-12 shrink-0" />
+              <ProductThumbnail seed={product.sku} category={product.category} className="size-12 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{product.name}</p>
                 <p className="text-xs text-muted-foreground">{product.sku} · {product.subCategory}</p>

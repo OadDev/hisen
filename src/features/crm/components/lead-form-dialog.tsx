@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MACHINES } from '@/mock/products'
+import { useCreateLead } from '@/features/crm/api'
+import { ApiError } from '@/lib/api-client'
 
 const schema = z.object({
   company: z.string().min(2, 'Company name is required'),
@@ -27,13 +29,28 @@ export function LeadFormDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     control,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
-  function onSubmit(values: FormValues) {
-    toast.success(`Lead created for ${values.company}`)
-    reset()
-    onOpenChange(false)
+  const createLead = useCreateLead()
+
+  async function onSubmit(values: FormValues) {
+    try {
+      await createLead.mutateAsync({
+        company: values.company,
+        contact_name: values.contactName,
+        email: values.email,
+        phone: values.phone,
+        source: values.source,
+        interested_product: values.interestedProduct,
+        estimated_value: Number(values.estimatedValue),
+      })
+      toast.success(`Lead created for ${values.company}`)
+      reset()
+      onOpenChange(false)
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to create lead')
+    }
   }
 
   return (
@@ -116,7 +133,7 @@ export function LeadFormDialog({ open, onOpenChange }: { open: boolean; onOpenCh
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Lead</Button>
+            <Button type="submit" disabled={isSubmitting}>Create Lead</Button>
           </DialogFooter>
         </form>
       </DialogContent>

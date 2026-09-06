@@ -4,16 +4,20 @@ import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartTooltip } from '@/components/shared/chart-tooltip'
 import { KpiCard } from '@/components/shared/kpi-card'
-import { LEADS, leadOwnerName } from '@/mock/leads'
+import { PageSkeleton } from '@/components/shared/page-skeleton'
+import { EmptyState } from '@/components/shared/empty-state'
+import { useLeads } from '@/features/crm/api'
 import { formatCurrency } from '@/lib/utils'
-import { TrendingDown, DollarSign, Percent } from 'lucide-react'
+import { TrendingDown, DollarSign, Percent, AlertTriangle } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 
 const CHART_COLORS = ['var(--chart-4)', 'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-5)', 'var(--chart-6)']
 
 export function LostLeadsPage() {
-  const lost = useMemo(() => LEADS.filter((l) => l.stage === 'Lost'), [])
+  const { data, isLoading, isError, error } = useLeads({ per_page: 100 })
+  const allLeads = useMemo(() => data?.data ?? [], [data])
+  const lost = useMemo(() => allLeads.filter((l) => l.stage === 'Lost'), [allLeads])
 
   const reasonBreakdown = useMemo(() => {
     const map = new Map<string, number>()
@@ -31,7 +35,15 @@ export function LostLeadsPage() {
   }, [lost])
 
   const lostValue = lost.reduce((sum, l) => sum + l.estimatedValue, 0)
-  const winRate = Math.round((LEADS.filter((l) => l.stage === 'Won').length / LEADS.length) * 100)
+  const winRate = allLeads.length ? Math.round((allLeads.filter((l) => l.stage === 'Won').length / allLeads.length) * 100) : 0
+
+  if (isLoading) {
+    return <PageSkeleton />
+  }
+
+  if (isError) {
+    return <EmptyState icon={AlertTriangle} title="Couldn't load lost leads" description={error.message} />
+  }
 
   return (
     <div>
@@ -98,7 +110,7 @@ export function LostLeadsPage() {
               {lost.slice(0, 15).map((lead) => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium">{lead.company}</TableCell>
-                  <TableCell>{leadOwnerName(lead)}</TableCell>
+                  <TableCell>{lead.owner?.name ?? 'Unassigned'}</TableCell>
                   <TableCell><Badge variant="outline">{lead.source}</Badge></TableCell>
                   <TableCell className="text-muted-foreground">{lead.lostReason}</TableCell>
                   <TableCell className="text-right">{formatCurrency(lead.estimatedValue)}</TableCell>
