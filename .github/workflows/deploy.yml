@@ -18,24 +18,44 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
           script: |
-            cd "${{ secrets.DEPLOY_PATH }}"
+            set -e
+            APP_DIR="${{ secrets.DEPLOY_PATH }}"
+            WEB_ROOT="${{ secrets.PUBLIC_HTML_PATH }}"
 
+            if [ ! -d "$APP_DIR/.git" ]; then
+            echo "ERROR: $APP_DIR is not a git checkout yet."
+            echo "One-time setup: git clone <this-repo-url> \"$APP_DIR\""
+            exit 1
+            fi
+
+            cd "$APP_DIR"
             git fetch origin main
             git reset --hard origin/main
 
-            # --- Frontend ---
             npm ci
             npm run build
 
-            # --- Backend ---
-            cd backend
+            rsync -a --delete --exclude ".htaccess" --exclude "api" dist/ "$WEB_ROOT/"
+
+            if [ ! -f "$WEB_ROOT/.htaccess" ]; then
+            write_htaccess() { cat > "$WEB_ROOT/.htaccess"; }
+            write_htaccess <<'HTACCESS'
+            RewriteEngine On
+            RewriteBase /
+            RewriteCond %{REQUEST_URI} ^/api [NC]
+            RewriteRule ^ - [L]
+            RewriteCond %{REQUEST_FILENAME} -f [OR]
+            RewriteCond %{REQUEST_FILENAME} -d
+            RewriteRule ^ - [L]
+            RewriteRule ^ index.html [L]
+            HTACCESS
+            fi
+
+            cd "$APP_DIR/backend"
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
-            # Reload PHP-FPM so the new code is picked up. Adjust the service
-            # name to match your server, and make sure the deploy user has
-            # passwordless sudo for just this command (see README notes).
-            # sudo systemctl reload php8.4-fpm
+            ln -sfn "$APP_DIR/backend/public" "$WEB_ROOT/api"
