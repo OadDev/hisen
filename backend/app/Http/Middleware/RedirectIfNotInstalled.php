@@ -15,7 +15,7 @@ class RedirectIfNotInstalled
             return $next($request);
         }
 
-        if ($request->expectsJson() || $request->is('api/*')) {
+        if ($request->expectsJson() || $request->is('v1/*')) {
             return response()->json([
                 'message' => 'The application has not been installed yet.',
                 'install_url' => url('/install'),

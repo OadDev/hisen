@@ -10,6 +10,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
+        // Laravel prefixes api.php routes with "api/" by default. This app is
+        // deployed with Laravel's own document root mounted at <domain>/api
+        // (see .github/workflows/deploy.yml), so that default would produce
+        // a doubled "/api/api/v1/..." URL. routes/api.php already declares
+        // its own "v1" prefix, so disable Laravel's automatic one here.
+        apiPrefix: '',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -22,6 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
-            return $request->is('api/*') || $request->expectsJson();
+            return $request->is('v1/*') || $request->expectsJson();
         });
     })->create();
