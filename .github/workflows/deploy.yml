@@ -58,4 +58,4 @@ jobs:
 
       - name: Run migrations and rebuild caches over HTTP
         run: |
-          curl -sf "${{ secrets.SITE_URL }}/api/deploy-finalize/${{ secrets.DEPLOY_SECRET }}"
+          curl -sS -w "\nHTTP status: %{http_code}\n" "${{ secrets.SITE_URL }}/api/deploy-finalize/${{ secrets.DEPLOY_SECRET }}"
