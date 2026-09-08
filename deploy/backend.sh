@@ -38,6 +38,21 @@ if [ -n "$DEPLOY_SECRET_VALUE" ] && [ -f "$ENV_FILE" ]; then
   fi
 fi
 
+# `php artisan key:generate` needs the real Laravel bootstrap, which can't
+# run under this host's CLI PHP -- but an APP_KEY is just base64-encoded
+# random bytes, so generate it directly (matching Laravel's own format) if
+# it's missing.
+if [ -f "$ENV_FILE" ] && ! grep -q '^APP_KEY=.\+' "$ENV_FILE"; then
+  NEW_APP_KEY="base64:$(openssl rand -base64 32)"
+  if grep -q '^APP_KEY=' "$ENV_FILE"; then
+    tmp="$(mktemp)"
+    awk -v val="$NEW_APP_KEY" 'BEGIN{FS=OFS="="} $1=="APP_KEY"{$0="APP_KEY="val} {print}' "$ENV_FILE" > "$tmp"
+    mv "$tmp" "$ENV_FILE"
+  else
+    printf '\nAPP_KEY=%s\n' "$NEW_APP_KEY" >> "$ENV_FILE"
+  fi
+fi
+
 if [ ! -f "$WEB_ROOT/.htaccess" ]; then
   cat > "$WEB_ROOT/.htaccess" <<'HTACCESS'
 RewriteEngine On
