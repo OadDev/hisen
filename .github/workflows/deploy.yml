@@ -55,3 +55,7 @@ jobs:
             git reset --hard origin/main
 
             bash deploy/backend.sh "$WEB_ROOT"
+
+      - name: Run migrations and rebuild caches over HTTP
+        run: |
+          curl -sf "${{ secrets.SITE_URL }}/api/deploy-finalize/${{ secrets.DEPLOY_SECRET }}"

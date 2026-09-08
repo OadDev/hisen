@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\DeployController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/deploy-finalize/{secret}', [DeployController::class, 'finalize']);
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);

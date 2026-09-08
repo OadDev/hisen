@@ -30,6 +30,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Deploy Finalize Secret
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret checked by the /deploy-finalize/{secret} route, which lets
+    | CI run migrations and rebuild caches over HTTP (the web PHP runtime) on
+    | hosts where SSH's CLI PHP is a different, older version than the one
+    | actually serving the site.
+    |
+    */
+
+    'deploy_secret' => env('DEPLOY_SECRET'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |
