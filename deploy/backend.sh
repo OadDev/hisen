@@ -5,11 +5,13 @@
 # composer runs with --ignore-platform-reqs because this host's SSH/CLI PHP
 # is an older version than the one actually serving the site over HTTP --
 # composer itself works fine on the older PHP, it just refuses by default
-# once it sees the app's composer.json wants a newer one. Since composer
-# install only needs to write files (not execute the app's own code), this
-# is safe. Migrations and cache-building are NOT run here for the same
-# reason -- they boot the actual Laravel framework code, which needs the
-# real PHP version -- so they instead run over HTTP via the
+# once it sees the app's composer.json wants a newer one. --no-scripts skips
+# Composer's post-install hooks (Laravel's package discovery among them),
+# since those hooks execute real package PHP code -- including files using
+# 8.x-only syntax -- under this same old PHP, which fails to even parse.
+# Package discovery, migrations, and cache-building are NOT run here for
+# the same reason -- they all boot the actual Laravel framework code, which
+# needs the real PHP version -- so they instead run over HTTP via the
 # /api/deploy-finalize/{secret} route, hitting the web server's PHP.
 #
 # Invoked as: bash deploy/backend.sh <web-root-path> [deploy-secret]
@@ -53,6 +55,6 @@ cd "$APP_DIR/backend"
 
 COMPOSER_BIN="$(command -v composer)"
 composer_php="$(command -v php || command -v lsphp)"
-"$composer_php" "$COMPOSER_BIN" install --no-dev --optimize-autoloader --ignore-platform-reqs
+"$composer_php" "$COMPOSER_BIN" install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
 ln -sfn "$APP_DIR/backend/public" "$WEB_ROOT/api"

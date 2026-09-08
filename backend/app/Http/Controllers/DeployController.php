@@ -12,6 +12,7 @@ class DeployController extends Controller
         $expected = (string) config('app.deploy_secret');
         abort_if($expected === '' || ! hash_equals($expected, $secret), 404);
 
+        Artisan::call('package:discover');
         Artisan::call('migrate', ['--force' => true]);
         $migrateOutput = Artisan::output();
         Artisan::call('config:cache');
