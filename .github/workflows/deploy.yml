@@ -59,3 +59,22 @@ jobs:
       - name: Run migrations and rebuild caches over HTTP
         run: |
           curl -sS -w "\nHTTP status: %{http_code}\n" "${{ secrets.SITE_URL }}/api/deploy-finalize/${{ secrets.DEPLOY_SECRET }}"
+
+      - name: TEMP DEBUG - show recent Laravel log and storage permissions
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: false
+          script: |
+            APP_DIR="${{ secrets.DEPLOY_PATH }}"
+            cd "$APP_DIR/backend"
+            echo "--- .env sanity (no secret values) ---"
+            grep -E '^(APP_ENV|APP_DEBUG|DB_CONNECTION|DB_HOST|DB_DATABASE)=' .env
+            grep -q '^APP_KEY=.\+' .env && echo "APP_KEY: set" || echo "APP_KEY: MISSING/EMPTY"
+            echo "--- storage / bootstrap/cache permissions ---"
+            ls -la storage storage/framework storage/framework/sessions storage/framework/views storage/framework/cache storage/logs bootstrap/cache 2>&1
+            echo "--- last 60 lines of laravel.log ---"
+            tail -n 60 storage/logs/laravel.log 2>&1 || echo "no log file"
