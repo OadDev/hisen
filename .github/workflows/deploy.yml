@@ -32,6 +32,15 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            for d in "$HOME"/nodevenv/*/*/bin "$HOME"/.nvm/versions/node/*/bin /opt/alt/alt-nodejs*/root/usr/bin; do
+              if [ -x "$d/npm" ]; then
+                export PATH="$d:$PATH"
+                break
+              fi
+            done
+
+            command -v npm >/dev/null 2>&1 || { echo "ERROR: npm not found on PATH or in common install locations."; exit 1; }
+
             npm ci
             npm run build
 
