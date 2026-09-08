@@ -12,16 +12,28 @@
 # real PHP version -- so they instead run over HTTP via the
 # /api/deploy-finalize/{secret} route, hitting the web server's PHP.
 #
-# Invoked as: bash deploy/backend.sh <web-root-path>
+# Invoked as: bash deploy/backend.sh <web-root-path> [deploy-secret]
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 WEB_ROOT="$1"
+DEPLOY_SECRET_VALUE="$2"
 
 if [ -z "$WEB_ROOT" ]; then
-  echo "Usage: $0 <web-root-path>" >&2
+  echo "Usage: $0 <web-root-path> [deploy-secret]" >&2
   exit 1
+fi
+
+ENV_FILE="$APP_DIR/backend/.env"
+if [ -n "$DEPLOY_SECRET_VALUE" ] && [ -f "$ENV_FILE" ]; then
+  if grep -q '^DEPLOY_SECRET=' "$ENV_FILE"; then
+    tmp="$(mktemp)"
+    awk -v val="$DEPLOY_SECRET_VALUE" 'BEGIN{FS=OFS="="} $1=="DEPLOY_SECRET"{$0="DEPLOY_SECRET="val} {print}' "$ENV_FILE" > "$tmp"
+    mv "$tmp" "$ENV_FILE"
+  else
+    printf '\nDEPLOY_SECRET=%s\n' "$DEPLOY_SECRET_VALUE" >> "$ENV_FILE"
+  fi
 fi
 
 if [ ! -f "$WEB_ROOT/.htaccess" ]; then
