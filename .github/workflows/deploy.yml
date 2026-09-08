@@ -9,7 +9,29 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy over SSH
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install sshpass
+        run: sudo apt-get update -qq && sudo apt-get install -y sshpass
+
+      - name: Sync built frontend to web root
+        run: |
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -az --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no" \
+            --exclude ".htaccess" --exclude "api" \
+            dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PUBLIC_HTML_PATH }}/"
+
+      - name: Deploy backend over SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -31,20 +53,6 @@ jobs:
             cd "$APP_DIR"
             git fetch origin main
             git reset --hard origin/main
-
-            for d in "$HOME"/nodevenv/*/*/bin "$HOME"/.nvm/versions/node/*/bin /opt/alt/alt-nodejs*/root/usr/bin; do
-              if [ -x "$d/npm" ]; then
-                export PATH="$d:$PATH"
-                break
-              fi
-            done
-
-            command -v npm >/dev/null 2>&1 || { echo "ERROR: npm not found on PATH or in common install locations."; exit 1; }
-
-            npm ci
-            npm run build
-
-            rsync -a --delete --exclude ".htaccess" --exclude "api" dist/ "$WEB_ROOT/"
 
             if [ ! -f "$WEB_ROOT/.htaccess" ]; then
             write_htaccess() { cat > "$WEB_ROOT/.htaccess"; }
