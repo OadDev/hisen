@@ -77,9 +77,20 @@ jobs:
                 break
               fi
             done
+
             if [ -z "$PHP_BIN" ]; then
-              echo "ERROR: No PHP 8.2+ binary found (checked php8.4, php8.3, php8.2, lsphp84, lsphp83, lsphp82)."
-              echo "Available php-like commands:"
+              for f in $(find /opt /usr/local /usr/local/lsws "$HOME" -maxdepth 6 -type f \( -iname 'php8.*' -o -iname 'lsphp8*' -o -iname 'php' -o -iname 'lsphp' \) 2>/dev/null); do
+                [ -x "$f" ] || continue
+                v="$("$f" -r 'echo PHP_VERSION;' 2>/dev/null)" || continue
+                case "$v" in
+                  8.2*|8.3*|8.4*|8.5*|9.*) PHP_BIN="$f"; break ;;
+                esac
+              done
+            fi
+
+            if [ -z "$PHP_BIN" ]; then
+              echo "ERROR: No PHP 8.2+ binary found on PATH or under /opt, /usr/local, or $HOME."
+              echo "Available php-like commands on PATH:"
               compgen -c | grep -i '^php\|^lsphp' | sort -u || true
               exit 1
             fi
