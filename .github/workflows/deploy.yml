@@ -79,22 +79,13 @@ jobs:
             done
 
             if [ -z "$PHP_BIN" ]; then
-              CANDIDATES=$(
-                for root in /opt /usr/local /usr/local/lsws "$HOME"; do
-                  find "$root" -maxdepth 6 -type f -iname 'php8.*' 2>/dev/null
-                  find "$root" -maxdepth 6 -type f -iname 'lsphp8*' 2>/dev/null
+              for root in /opt /usr/local /usr/local/lsws "$HOME"; do
+                for f in $(find "$root" -maxdepth 6 -type f -iname 'php8.*' 2>/dev/null) $(find "$root" -maxdepth 6 -type f -iname 'lsphp8*' 2>/dev/null); do
+                  [ -x "$f" ] || continue
+                  v=$("$f" -r 'echo PHP_VERSION;' 2>/dev/null) || continue
+                  case "$v" in 8.2*|8.3*|8.4*|8.5*|9.*) PHP_BIN="$f" ;; esac
+                  [ -n "$PHP_BIN" ] && break
                 done
-              )
-              for f in $CANDIDATES; do
-                [ -x "$f" ] || continue
-                v=$("$f" -r 'echo PHP_VERSION;' 2>/dev/null) || continue
-                case "$v" in
-                  8.2*) PHP_BIN="$f" ;;
-                  8.3*) PHP_BIN="$f" ;;
-                  8.4*) PHP_BIN="$f" ;;
-                  8.5*) PHP_BIN="$f" ;;
-                  9.*) PHP_BIN="$f" ;;
-                esac
                 [ -n "$PHP_BIN" ] && break
               done
             fi
