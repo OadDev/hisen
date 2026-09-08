@@ -21,11 +21,11 @@ jobs:
             set -e
             APP_DIR="${{ secrets.DEPLOY_PATH }}"
             WEB_ROOT="${{ secrets.PUBLIC_HTML_PATH }}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
 
             if [ ! -d "$APP_DIR/.git" ]; then
-            echo "ERROR: $APP_DIR is not a git checkout yet."
-            echo "One-time setup: git clone <this-repo-url> \"$APP_DIR\""
-            exit 1
+            mkdir -p "$(dirname "$APP_DIR")"
+            git clone "$REPO_URL" "$APP_DIR"
             fi
 
             cd "$APP_DIR"
