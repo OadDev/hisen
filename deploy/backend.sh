@@ -28,6 +28,16 @@ if [ -z "$WEB_ROOT" ]; then
 fi
 
 ENV_FILE="$APP_DIR/backend/.env"
+
+# .env is gitignored (it holds secrets), so a fresh clone never has one --
+# normally `composer create-project` or its post-install hooks copy
+# .env.example to .env, but --no-scripts skips that too. Bootstrap it
+# directly; the install wizard (and this script, below) then fill in the
+# real values.
+if [ ! -f "$ENV_FILE" ] && [ -f "$APP_DIR/backend/.env.example" ]; then
+  cp "$APP_DIR/backend/.env.example" "$ENV_FILE"
+fi
+
 if [ -n "$DEPLOY_SECRET_VALUE" ] && [ -f "$ENV_FILE" ]; then
   if grep -q '^DEPLOY_SECRET=' "$ENV_FILE"; then
     tmp="$(mktemp)"
