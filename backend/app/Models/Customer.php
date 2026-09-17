@@ -45,6 +45,11 @@ class Customer extends Model
         return $this->hasMany(InstalledMachine::class);
     }
 
+    public function machineRequirements(): HasMany
+    {
+        return $this->hasMany(CustomerMachineRequirement::class);
+    }
+
     public function quotations(): HasMany
     {
         return $this->hasMany(Quotation::class);

@@ -25,6 +25,7 @@ class CustomerResource extends JsonResource
             'branches' => BranchResource::collection($this->whenLoaded('branches')),
             'contacts' => ContactResource::collection($this->whenLoaded('contacts')),
             'installedMachines' => InstalledMachineResource::collection($this->whenLoaded('installedMachines')),
+            'machineRequirements' => MachineRequirementResource::collection($this->whenLoaded('machineRequirements')),
             'createdAt' => $this->created_at,
         ];
     }

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AmcContractController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BomComponentController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\CustomerMachineRequirementController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\InstallationController;
@@ -38,6 +39,10 @@ Route::post('/leads/{code}/activities', [LeadController::class, 'addActivity']);
 
 // Customers
 Route::apiResource('customers', CustomerController::class)->parameters(['customers' => 'code']);
+Route::get('/customers/{code}/machine-requirements', [CustomerMachineRequirementController::class, 'index']);
+Route::post('/customers/{code}/machine-requirements', [CustomerMachineRequirementController::class, 'store']);
+Route::patch('/machine-requirements/{machineRequirement}', [CustomerMachineRequirementController::class, 'update']);
+Route::delete('/machine-requirements/{machineRequirement}', [CustomerMachineRequirementController::class, 'destroy']);
 
 // Catalog
 Route::apiResource('products', ProductController::class);

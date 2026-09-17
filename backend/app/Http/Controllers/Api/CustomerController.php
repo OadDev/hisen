@@ -28,7 +28,7 @@ class CustomerController extends Controller
 
     public function show(string $code)
     {
-        $customer = Customer::where('code', $code)->with(['accountOwner', 'branches', 'contacts', 'installedMachines'])->firstOrFail();
+        $customer = Customer::where('code', $code)->with(['accountOwner', 'branches', 'contacts', 'installedMachines', 'machineRequirements'])->firstOrFail();
 
         return new CustomerResource($customer);
     }

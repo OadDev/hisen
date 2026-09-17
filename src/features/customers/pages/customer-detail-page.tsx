@@ -10,6 +10,7 @@ import { PageSkeleton } from '@/components/shared/page-skeleton'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useCustomer } from '@/features/customers/api'
+import { MachineRequirementsCard } from '@/features/customers/components/machine-requirements-card'
 import { formatCurrency, formatDate, initials } from '@/lib/utils'
 
 export function CustomerDetailPage() {
@@ -73,6 +74,7 @@ export function CustomerDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="requirements">Machine Requirements</TabsTrigger>
           <TabsTrigger value="branches">Branches & Contacts</TabsTrigger>
           <TabsTrigger value="machines">Installed Machines</TabsTrigger>
           <TabsTrigger value="purchases">Purchase History</TabsTrigger>
@@ -113,6 +115,10 @@ export function CustomerDetailPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="requirements" className="mt-4">
+          <MachineRequirementsCard customer={customer} />
         </TabsContent>
 
         <TabsContent value="branches" className="mt-4">

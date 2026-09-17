@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type Page } from '@/lib/api-client'
 
 export interface ContactPerson {
@@ -30,6 +30,17 @@ export interface InstalledMachine {
   status: 'operational' | 'under-service' | 'decommissioned'
 }
 
+export interface MachineRequirement {
+  id: number
+  productId: number | null
+  productName: string
+  specs: Record<string, string>
+  quantity: number
+  unitPrice: number
+  notes: string | null
+  createdAt: string
+}
+
 export interface Customer {
   id: string
   name: string
@@ -46,6 +57,7 @@ export interface Customer {
   branches: Branch[]
   contacts: ContactPerson[]
   installedMachines: InstalledMachine[]
+  machineRequirements: MachineRequirement[]
   createdAt: string
 }
 
@@ -61,5 +73,31 @@ export function useCustomer(id: string | undefined) {
     queryKey: ['customers', id],
     queryFn: () => api.get<Customer>(`/customers/${id}`),
     enabled: !!id,
+  })
+}
+
+export function useAddMachineRequirement(customerId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { product_id: number; quantity?: number; unit_price?: number; notes?: string }) =>
+      api.post<MachineRequirement>(`/customers/${customerId}/machine-requirements`, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customers', customerId] }),
+  })
+}
+
+export function useUpdateMachineRequirement(customerId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: number; quantity?: number; unit_price?: number }) =>
+      api.patch<MachineRequirement>(`/machine-requirements/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customers', customerId] }),
+  })
+}
+
+export function useRemoveMachineRequirement(customerId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/machine-requirements/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customers', customerId] }),
   })
 }
