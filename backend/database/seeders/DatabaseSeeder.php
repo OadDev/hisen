@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             CustomerSeeder::class,
             LeadSeeder::class,
+            WhatsappTemplateSeeder::class,
             QuotationSeeder::class,
             SalesOrderSeeder::class,
             VendorSeeder::class,

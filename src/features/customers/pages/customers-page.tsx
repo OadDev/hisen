@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
@@ -11,10 +12,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useCustomers, type Customer } from '@/features/customers/api'
+import { CustomerFormDialog } from '@/features/customers/components/customer-form-dialog'
 import { formatCurrency, initials } from '@/lib/utils'
 
 export function CustomersPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [formOpen, setFormOpen] = useState(searchParams.get('new') === '1')
   const { data, isLoading, isError, error } = useCustomers({ per_page: 100 })
 
   const columns: ColumnDef<Customer>[] = [
@@ -53,7 +57,7 @@ export function CustomersPage() {
       <PageHeader
         title="Customers"
         description="Manage companies, branches, contacts, and account history."
-        actions={<EntityToolbar newLabel="New Customer" onNew={() => {}} />}
+        actions={<EntityToolbar newLabel="New Customer" onNew={() => setFormOpen(true)} />}
       />
       {isLoading ? (
         <PageSkeleton />
@@ -73,6 +77,7 @@ export function CustomersPage() {
           )}
         />
       )}
+      <CustomerFormDialog open={formOpen} onOpenChange={setFormOpen} />
     </div>
   )
 }

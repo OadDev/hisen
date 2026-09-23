@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, FileText, Cog, ShieldCheck, Headphones, Mail, Phone, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MapPin, FileText, Cog, ShieldCheck, Headphones, Mail, Phone, MessageCircle, AlertTriangle } from 'lucide-react'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,12 +12,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useCustomer } from '@/features/customers/api'
 import { MachineRequirementsCard } from '@/features/customers/components/machine-requirements-card'
+import { SendWhatsAppDialog } from '@/features/whatsapp/components/send-whatsapp-dialog'
 import { formatCurrency, formatDate, initials } from '@/lib/utils'
 
 export function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: customer, isLoading, isError, error } = useCustomer(id)
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false)
 
   if (isLoading) {
     return <PageSkeleton />
@@ -108,6 +111,9 @@ export function CustomerDetailPage() {
                         <span className="flex items-center gap-1"><Phone className="size-3.5" />{customer.contacts[0].phone}</span>
                       </div>
                     </div>
+                    <Button variant="outline" size="sm" onClick={() => setWhatsAppOpen(true)}>
+                      <MessageCircle /> WhatsApp
+                    </Button>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No contact on file.</p>
@@ -202,6 +208,8 @@ export function CustomerDetailPage() {
           <EmptyState icon={Headphones} title="Service history" description="Past service tickets and resolutions will be listed here." />
         </TabsContent>
       </Tabs>
+
+      <SendWhatsAppDialog open={whatsAppOpen} onOpenChange={setWhatsAppOpen} phone={customer.contacts[0]?.phone} />
     </div>
   )
 }

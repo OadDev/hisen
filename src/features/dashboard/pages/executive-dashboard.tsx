@@ -1,5 +1,5 @@
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { IndianRupee, ShoppingCart, Factory, Users, TrendingUp, AlertTriangle, FileText, Wrench, Plus, PackageCheck } from 'lucide-react'
+import { IndianRupee, ShoppingCart, Factory, Users, TrendingUp, AlertTriangle, FileText, Wrench, Plus, PackageCheck, Receipt, UserPlus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { KpiCard } from '@/components/shared/kpi-card'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,6 +7,7 @@ import { ChartTooltip } from '@/components/shared/chart-tooltip'
 import { ActivityFeed } from '@/features/dashboard/components/activity-feed'
 import { AlertsPanel } from '@/features/dashboard/components/alerts-panel'
 import { QuickActions } from '@/features/dashboard/components/quick-actions'
+import { LastInvoiceCard } from '@/features/dashboard/components/last-invoice-card'
 import { REVENUE_TREND, ORDER_FUNNEL, SALES_BY_REGION, CATEGORY_SALES_SPLIT } from '@/mock/analytics'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,20 @@ export function ExecutiveDashboard() {
         <KpiCard label="Open Sales Orders" value="86" icon={ShoppingCart} trend={{ value: 6.1, label: 'vs last month' }} accent="chart-2" />
         <KpiCard label="Production Utilization" value="82%" icon={Factory} trend={{ value: -2.4, label: 'vs last month' }} accent="chart-3" />
         <KpiCard label="Active Customers" value="312" icon={Users} trend={{ value: 8.5, label: 'vs last quarter' }} accent="chart-4" />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <QuickActions
+          actions={[
+            { label: 'New Quotation', to: '/quotations?new=1', icon: FileText },
+            { label: 'New Invoice', to: '/finance/invoices?new=1', icon: Receipt },
+            { label: 'New Client', to: '/customers?new=1', icon: UserPlus },
+            { label: 'New Sales Order', to: '/sales-orders?new=1', icon: Plus },
+            { label: 'New Work Order', to: '/production/work-orders?new=1', icon: Wrench },
+            { label: 'Dispatch Planner', to: '/dispatch', icon: PackageCheck },
+          ]}
+        />
+        <LastInvoiceCard />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -97,7 +112,7 @@ export function ExecutiveDashboard() {
         </Card>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Sales Funnel</CardTitle>
@@ -131,15 +146,6 @@ export function ExecutiveDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        <QuickActions
-          actions={[
-            { label: 'New Quotation', to: '/quotations?new=1', icon: FileText },
-            { label: 'New Sales Order', to: '/sales-orders?new=1', icon: Plus },
-            { label: 'New Work Order', to: '/production/work-orders?new=1', icon: Wrench },
-            { label: 'Dispatch Planner', to: '/dispatch', icon: PackageCheck },
-          ]}
-        />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Phone, Mail, MessageCircle, Calendar, FileText, Building2, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
@@ -11,7 +12,9 @@ import { CommentsPanel } from '@/components/shared/comments-panel'
 import { AttachmentsPanel } from '@/components/shared/attachments-panel'
 import { EmptyState } from '@/components/shared/empty-state'
 import { PageSkeleton } from '@/components/shared/page-skeleton'
-import { useLead } from '@/features/crm/api'
+import { useAddLeadActivity, useLead } from '@/features/crm/api'
+import { ResponseSlaBadge } from '@/features/crm/components/response-sla-badge'
+import { SendWhatsAppDialog } from '@/features/whatsapp/components/send-whatsapp-dialog'
 import { formatCurrency, formatDate, formatDateTime, initials } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -21,6 +24,8 @@ export function LeadDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: lead, isLoading, isError, error } = useLead(id)
+  const addActivity = useAddLeadActivity(id)
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false)
 
   if (isLoading) {
     return <PageSkeleton />
@@ -165,6 +170,7 @@ export function LeadDetailPage() {
                   <p className="text-xs text-muted-foreground">{lead.company}</p>
                 </div>
               </div>
+              <ResponseSlaBadge createdAt={lead.createdAt} activities={lead.activities ?? []} />
               <div className="flex flex-col gap-2 text-sm">
                 <a href={`mailto:${lead.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                   <Mail className="size-4" /> {lead.email}
@@ -180,7 +186,7 @@ export function LeadDetailPage() {
                 <Button variant="outline" size="sm">
                   <Mail /> Email
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setWhatsAppOpen(true)}>
                   <MessageCircle /> WhatsApp
                 </Button>
               </div>
@@ -211,6 +217,13 @@ export function LeadDetailPage() {
           </Link>
         </div>
       </div>
+
+      <SendWhatsAppDialog
+        open={whatsAppOpen}
+        onOpenChange={setWhatsAppOpen}
+        phone={lead.phone}
+        onLogActivity={(message) => addActivity.mutateAsync({ type: 'whatsapp', title: 'WhatsApp message sent', description: message })}
+      />
     </div>
   )
 }

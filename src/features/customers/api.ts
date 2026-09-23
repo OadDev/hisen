@@ -76,6 +76,25 @@ export function useCustomer(id: string | undefined) {
   })
 }
 
+export interface CreateCustomerInput {
+  name: string
+  industry?: string
+  gstin?: string
+  pan_number?: string
+  currency?: string
+  credit_limit?: number
+  credit_days?: number
+  status?: string
+}
+
+export function useCreateCustomer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateCustomerInput) => api.post<Customer>('/customers', input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['customers'] }),
+  })
+}
+
 export function useAddMachineRequirement(customerId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({

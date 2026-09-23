@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\WarehouseController;
 use App\Http\Controllers\Api\WarrantyClaimController;
+use App\Http\Controllers\Api\WhatsappTemplateController;
 use App\Http\Controllers\Api\WorkOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,7 @@ Route::post('/leads', [LeadController::class, 'store']);
 Route::get('/leads/{code}', [LeadController::class, 'show']);
 Route::patch('/leads/{code}', [LeadController::class, 'update']);
 Route::post('/leads/{code}/activities', [LeadController::class, 'addActivity']);
+Route::apiResource('whatsapp-templates', WhatsappTemplateController::class)->except(['show']);
 
 // Customers
 Route::apiResource('customers', CustomerController::class)->parameters(['customers' => 'code']);
