@@ -34,7 +34,7 @@ export function LostLeadsPage() {
     return Array.from(map, ([source, value]) => ({ source, value }))
   }, [lost])
 
-  const lostValue = lost.reduce((sum, l) => sum + l.estimatedValue, 0)
+  const lostValue = lost.reduce((sum, l) => sum + Number(l.estimatedValue), 0)
   const winRate = allLeads.length ? Math.round((allLeads.filter((l) => l.stage === 'Won').length / allLeads.length) * 100) : 0
 
   if (isLoading) {
