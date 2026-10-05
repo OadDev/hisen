@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { LayoutGrid, List, Video, FileBadge, Wand2, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EntityToolbar } from '@/components/shared/entity-toolbar'
@@ -14,15 +14,18 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { PageSkeleton } from '@/components/shared/page-skeleton'
 import { EmptyState } from '@/components/shared/empty-state'
 import { useProducts, type ProductCategory } from '@/features/catalog/api'
+import { ProductFormDialog } from '@/features/catalog/components/product-form-dialog'
 import { formatCurrency } from '@/lib/utils'
 
 const CATEGORIES: (ProductCategory | 'All')[] = ['All', 'Machines', 'Accessories', 'Consumables', 'Spare Parts']
 
 export function CatalogPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [category, setCategory] = useState<ProductCategory | 'All'>('All')
   const [query, setQuery] = useState('')
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [formOpen, setFormOpen] = useState(searchParams.get('new') === '1')
 
   const { data, isLoading, isError, error } = useProducts({
     per_page: 200,
@@ -41,7 +44,7 @@ export function CatalogPage() {
             <Button variant="outline" size="sm" onClick={() => navigate('/configurator')}>
               <Wand2 /> Machine Configurator
             </Button>
-            <EntityToolbar newLabel="New Product" onNew={() => {}} />
+            <EntityToolbar newLabel="New Product" onNew={() => setFormOpen(true)} />
           </>
         }
       />
@@ -122,6 +125,7 @@ export function CatalogPage() {
           ))}
         </div>
       )}
+      <ProductFormDialog open={formOpen} onOpenChange={setFormOpen} />
     </div>
   )
 }

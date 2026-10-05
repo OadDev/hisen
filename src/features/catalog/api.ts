@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type Page } from '@/lib/api-client'
 import type { ProductCategory } from '@/mock/products'
 
@@ -36,5 +36,25 @@ export function useProduct(id: string | undefined) {
     queryKey: ['products', id],
     queryFn: () => api.get<Product>(`/products/${id}`),
     enabled: !!id,
+  })
+}
+
+export interface CreateProductInput {
+  sku: string
+  name: string
+  category: ProductCategory
+  sub_category?: string
+  description?: string
+  unit?: string
+  price?: number
+  currency?: string
+  status?: string
+}
+
+export function useCreateProduct() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateProductInput) => api.post<Product>('/products', input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   })
 }
