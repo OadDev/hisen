@@ -3,6 +3,7 @@ import { api, type Page } from '@/lib/api-client'
 import type { StaffRef } from '@/features/crm/api'
 
 export type QuotationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'won' | 'lost'
+export type QuotationPriority = 'low' | 'medium' | 'high'
 
 export interface QuotationCustomerRef {
   id: string
@@ -31,6 +32,7 @@ export interface Quotation {
   customer: QuotationCustomerRef | null
   owner: StaffRef | null
   status: QuotationStatus
+  priority: QuotationPriority
   currency: 'INR' | 'USD'
   validUntil: string | null
   discountPct: number
@@ -41,7 +43,7 @@ export interface Quotation {
   createdAt: string
 }
 
-export function useQuotations(params?: { status?: string; per_page?: number }) {
+export function useQuotations(params?: { status?: string; priority?: string; per_page?: number }) {
   return useQuery({
     queryKey: ['quotations', params],
     queryFn: () => api.get<Page<Quotation>>('/quotations', params),
@@ -68,6 +70,7 @@ export interface CreateQuotationInput {
   owner_id?: number
   currency?: string
   valid_until?: string
+  priority?: QuotationPriority
   discount_pct?: number
   tax_pct?: number
   line_items: CreateQuotationLineItemInput[]
@@ -84,7 +87,7 @@ export function useCreateQuotation() {
 export function useUpdateQuotation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; status?: QuotationStatus; discount_pct?: number; note?: string }) =>
+    mutationFn: ({ id, ...data }: { id: string; status?: QuotationStatus; priority?: QuotationPriority; discount_pct?: number; note?: string }) =>
       api.patch<Quotation>(`/quotations/${id}`, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] })

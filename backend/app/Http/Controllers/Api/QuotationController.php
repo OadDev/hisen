@@ -25,7 +25,14 @@ class QuotationController extends Controller
             $query->where('status', $status);
         }
 
-        return $query->orderByDesc('id')->paginate($request->integer('per_page', 25));
+        if ($priority = $request->string('priority')->toString()) {
+            $query->where('priority', $priority);
+        }
+
+        $quotations = $query->orderByDesc('id')->paginate($request->integer('per_page', 25));
+        $quotations->getCollection()->transform(fn (Quotation $quotation) => $this->withTotal($quotation));
+
+        return $quotations;
     }
 
     public function show(string $code)
@@ -42,6 +49,7 @@ class QuotationController extends Controller
             'owner_id' => ['nullable', 'exists:users,id'],
             'currency' => ['nullable', 'string', 'size:3'],
             'valid_until' => ['nullable', 'date'],
+            'priority' => ['nullable', 'in:low,medium,high'],
             'discount_pct' => ['nullable', 'numeric'],
             'tax_pct' => ['nullable', 'numeric'],
             'line_items' => ['required', 'array', 'min:1'],
@@ -57,6 +65,7 @@ class QuotationController extends Controller
                 'customer_id' => $data['customer_id'],
                 'owner_id' => $data['owner_id'] ?? $request->user()?->id,
                 'status' => 'draft',
+                'priority' => $data['priority'] ?? 'medium',
                 'currency' => $data['currency'] ?? Customer::find($data['customer_id'])->currency,
                 'valid_until' => $data['valid_until'] ?? now()->addDays(30),
                 'discount_pct' => $data['discount_pct'] ?? 0,
@@ -88,6 +97,7 @@ class QuotationController extends Controller
 
         $data = $request->validate([
             'status' => ['sometimes', 'in:draft,pending,approved,rejected,won,lost'],
+            'priority' => ['sometimes', 'in:low,medium,high'],
             'discount_pct' => ['nullable', 'numeric'],
             'note' => ['nullable', 'string'],
         ]);

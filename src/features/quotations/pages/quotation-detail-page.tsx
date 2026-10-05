@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmptyState } from '@/components/shared/empty-state'
 import { PageSkeleton } from '@/components/shared/page-skeleton'
-import { useQuotation, useConvertQuotationToSalesOrder } from '@/features/quotations/api'
+import { useQuotation, useConvertQuotationToSalesOrder, useUpdateQuotation, type QuotationPriority } from '@/features/quotations/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ApiError } from '@/lib/api-client'
@@ -19,6 +20,7 @@ export function QuotationDetailPage() {
   const navigate = useNavigate()
   const { data: quotation, isLoading, isError, error } = useQuotation(id)
   const convert = useConvertQuotationToSalesOrder()
+  const updateQuotation = useUpdateQuotation()
 
   if (isLoading) {
     return <PageSkeleton />
@@ -52,6 +54,16 @@ export function QuotationDetailPage() {
     }
   }
 
+  async function handlePriorityChange(priority: QuotationPriority) {
+    if (!id) return
+    try {
+      await updateQuotation.mutateAsync({ id, priority })
+      toast.success('Priority updated')
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to update priority')
+    }
+  }
+
   return (
     <div>
       <Button variant="ghost" size="sm" className="mb-2 -ml-2 text-muted-foreground" onClick={() => navigate('/quotations')}>
@@ -62,6 +74,7 @@ export function QuotationDetailPage() {
         description={`${customer?.name ?? 'Unknown customer'} · Prepared by ${owner?.name ?? 'Sales Team'}`}
         actions={
           <>
+            <StatusBadge status={quotation.priority} className="text-sm px-3 py-1" />
             <StatusBadge status={quotation.status} className="text-sm px-3 py-1" />
             <Button size="sm" variant="outline"><Printer /> Print</Button>
             <Button size="sm" variant="outline"><Mail /> Email</Button>
@@ -178,6 +191,19 @@ export function QuotationDetailPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Valid Until</span><span className="font-medium">{quotation.validUntil ? formatDate(quotation.validUntil) : '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Currency</span><span className="font-medium">{quotation.currency}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Owner</span><span className="font-medium">{owner?.name ?? '—'}</span></div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Priority</span>
+                <Select value={quotation.priority} onValueChange={(v) => handlePriorityChange(v as QuotationPriority)}>
+                  <SelectTrigger size="sm" className="w-28 capitalize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
           {customer && (

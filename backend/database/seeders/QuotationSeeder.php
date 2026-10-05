@@ -26,6 +26,7 @@ class QuotationSeeder extends Seeder
             $customer = $customers->random();
             $owner = User::randomOfRole('sales_executive');
             $status = fake()->randomElement(['draft', 'draft', 'pending', 'pending', 'pending', 'approved', 'approved', 'won', 'won', 'lost', 'rejected']);
+            $priority = fake()->randomElement(['low', 'low', 'medium', 'medium', 'medium', 'high']);
             $createdAt = fake()->dateTimeBetween('-1 year', 'now');
 
             $quotation = $this->createAt(Quotation::class, [
@@ -33,6 +34,7 @@ class QuotationSeeder extends Seeder
                 'customer_id' => $customer->id,
                 'owner_id' => $owner?->id,
                 'status' => $status,
+                'priority' => $priority,
                 'currency' => $customer->currency,
                 'valid_until' => (clone $createdAt)->modify('+30 days'),
                 'discount_pct' => fake()->randomElement([0, 3, 5, 7]),

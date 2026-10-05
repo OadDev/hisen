@@ -11,7 +11,7 @@ class Quotation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'customer_id', 'owner_id', 'status', 'currency', 'valid_until', 'discount_pct', 'tax_pct'];
+    protected $fillable = ['code', 'customer_id', 'owner_id', 'status', 'priority', 'currency', 'valid_until', 'discount_pct', 'tax_pct'];
 
     protected function casts(): array
     {

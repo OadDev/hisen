@@ -40,6 +40,10 @@ const STATUS_MAP: Record<string, Variant> = {
   inactive: 'muted',
   prospect: 'info',
   new: 'info',
+
+  low: 'muted',
+  medium: 'warning',
+  high: 'destructive',
 }
 
 export function statusVariant(status: string): Variant {
