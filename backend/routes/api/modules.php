@@ -55,6 +55,7 @@ Route::post('/quotations', [QuotationController::class, 'store']);
 Route::get('/quotations/{code}', [QuotationController::class, 'show']);
 Route::patch('/quotations/{code}', [QuotationController::class, 'update']);
 Route::post('/quotations/{code}/convert', [QuotationController::class, 'convertToSalesOrder']);
+Route::get('/quotations/{code}/pdf', [QuotationController::class, 'pdf']);
 
 // Sales Orders
 Route::get('/sales-orders', [SalesOrderController::class, 'index']);

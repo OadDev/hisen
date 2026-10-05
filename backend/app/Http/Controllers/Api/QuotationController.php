@@ -10,6 +10,7 @@ use App\Models\QuotationLineItem;
 use App\Models\QuotationVersion;
 use App\Models\SalesOrder;
 use App\Traits\GeneratesCode;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -98,6 +99,7 @@ class QuotationController extends Controller
         $data = $request->validate([
             'status' => ['sometimes', 'in:draft,pending,approved,rejected,won,lost'],
             'priority' => ['sometimes', 'in:low,medium,high'],
+            'watermark' => ['sometimes', 'boolean'],
             'discount_pct' => ['nullable', 'numeric'],
             'note' => ['nullable', 'string'],
         ]);
@@ -145,12 +147,39 @@ class QuotationController extends Controller
         return response()->json($order->load(['customer', 'owner']), 201);
     }
 
+    public function pdf(string $code)
+    {
+        $quotation = Quotation::where('code', $code)->with(['customer.branches', 'owner', 'lineItems'])->firstOrFail();
+        $headOffice = $quotation->customer?->branches->firstWhere('is_head_office', true)
+            ?? $quotation->customer?->branches->first();
+        $totals = $this->totals($quotation);
+
+        $pdf = Pdf::loadView('pdf.quotation', [
+            'quotation' => $quotation,
+            'headOffice' => $headOffice,
+            ...$totals,
+        ]);
+
+        return $pdf->stream("{$quotation->code}.pdf");
+    }
+
     private function calculateTotal(Quotation $quotation): float
+    {
+        return round($this->totals($quotation)['total'], 2);
+    }
+
+    private function totals(Quotation $quotation): array
     {
         $subtotal = $quotation->lineItems->sum(fn ($item) => $item->quantity * $item->unit_price * (1 - $item->discount_pct / 100));
         $afterDiscount = $subtotal * (1 - $quotation->discount_pct / 100);
+        $tax = $afterDiscount * ($quotation->tax_pct / 100);
 
-        return round($afterDiscount * (1 + $quotation->tax_pct / 100), 2);
+        return [
+            'subtotal' => $subtotal,
+            'afterDiscount' => $afterDiscount,
+            'tax' => $tax,
+            'total' => $afterDiscount + $tax,
+        ];
     }
 
     private function withTotal(Quotation $quotation)

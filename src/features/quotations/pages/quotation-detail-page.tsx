@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Mail, MessageCircle, Printer, ShoppingCart, History, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
@@ -8,9 +9,11 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { EmptyState } from '@/components/shared/empty-state'
 import { PageSkeleton } from '@/components/shared/page-skeleton'
-import { useQuotation, useConvertQuotationToSalesOrder, useUpdateQuotation, type QuotationPriority } from '@/features/quotations/api'
+import { useQuotation, useConvertQuotationToSalesOrder, useUpdateQuotation, openQuotationPdf, type QuotationPriority } from '@/features/quotations/api'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ApiError } from '@/lib/api-client'
@@ -21,6 +24,7 @@ export function QuotationDetailPage() {
   const { data: quotation, isLoading, isError, error } = useQuotation(id)
   const convert = useConvertQuotationToSalesOrder()
   const updateQuotation = useUpdateQuotation()
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   if (isLoading) {
     return <PageSkeleton />
@@ -64,6 +68,27 @@ export function QuotationDetailPage() {
     }
   }
 
+  async function handleWatermarkToggle(watermark: boolean) {
+    if (!id) return
+    try {
+      await updateQuotation.mutateAsync({ id, watermark })
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to update watermark setting')
+    }
+  }
+
+  async function handlePrint() {
+    if (!id) return
+    setPdfLoading(true)
+    try {
+      await openQuotationPdf(id)
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to generate PDF')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
   return (
     <div>
       <Button variant="ghost" size="sm" className="mb-2 -ml-2 text-muted-foreground" onClick={() => navigate('/quotations')}>
@@ -76,7 +101,7 @@ export function QuotationDetailPage() {
           <>
             <StatusBadge status={quotation.priority} className="text-sm px-3 py-1" />
             <StatusBadge status={quotation.status} className="text-sm px-3 py-1" />
-            <Button size="sm" variant="outline"><Printer /> Print</Button>
+            <Button size="sm" variant="outline" onClick={handlePrint} disabled={pdfLoading}><Printer /> {pdfLoading ? 'Preparing…' : 'Print'}</Button>
             <Button size="sm" variant="outline"><Mail /> Email</Button>
             <Button size="sm" variant="outline"><MessageCircle /> WhatsApp</Button>
             {quotation.status !== 'won' && (
@@ -203,6 +228,10 @@ export function QuotationDetailPage() {
                     <SelectItem value="high">High</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="watermark-toggle" className="text-muted-foreground font-normal">Watermark on PDF</Label>
+                <Switch id="watermark-toggle" checked={quotation.watermark} onCheckedChange={handleWatermarkToggle} />
               </div>
             </CardContent>
           </Card>

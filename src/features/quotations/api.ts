@@ -33,6 +33,7 @@ export interface Quotation {
   owner: StaffRef | null
   status: QuotationStatus
   priority: QuotationPriority
+  watermark: boolean
   currency: 'INR' | 'USD'
   validUntil: string | null
   discountPct: number
@@ -87,7 +88,7 @@ export function useCreateQuotation() {
 export function useUpdateQuotation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; status?: QuotationStatus; priority?: QuotationPriority; discount_pct?: number; note?: string }) =>
+    mutationFn: ({ id, ...data }: { id: string; status?: QuotationStatus; priority?: QuotationPriority; watermark?: boolean; discount_pct?: number; note?: string }) =>
       api.patch<Quotation>(`/quotations/${id}`, data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['quotations'] })
@@ -105,4 +106,12 @@ export function useConvertQuotationToSalesOrder() {
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] })
     },
   })
+}
+
+/** Fetches the quotation PDF (auth required, so it can't be a plain link) and opens it in a new tab. */
+export async function openQuotationPdf(id: string) {
+  const blob = await api.getBlob(`/quotations/${id}/pdf`)
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank', 'noopener')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }

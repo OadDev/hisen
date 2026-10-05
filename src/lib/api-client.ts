@@ -145,4 +145,13 @@ export const api = {
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  /** For endpoints returning a binary payload (e.g. a generated PDF) rather than JSON. */
+  async getBlob(path: string): Promise<Blob> {
+    const response = await fetch(new URL(API_BASE + path, window.location.origin).toString(), {
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    })
+    if (response.status === 401) onUnauthorized?.()
+    if (!response.ok) throw new ApiError(`Request failed (${response.status})`, response.status)
+    return response.blob()
+  },
 }

@@ -11,7 +11,7 @@ class Quotation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'customer_id', 'owner_id', 'status', 'priority', 'currency', 'valid_until', 'discount_pct', 'tax_pct'];
+    protected $fillable = ['code', 'customer_id', 'owner_id', 'status', 'priority', 'watermark', 'currency', 'valid_until', 'discount_pct', 'tax_pct'];
 
     protected function casts(): array
     {
@@ -19,6 +19,7 @@ class Quotation extends Model
             'valid_until' => 'date',
             'discount_pct' => 'decimal:2',
             'tax_pct' => 'decimal:2',
+            'watermark' => 'boolean',
         ];
     }
 
