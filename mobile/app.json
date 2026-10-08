@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Hisen Machinery ERP",
+    "slug": "hisen-machinery-erp",
+    "scheme": "hisenerp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hisenmachinery.erp"
+    },
+    "android": {
+      "package": "com.hisenmachinery.erp",
+      "adaptiveIcon": {
+        "backgroundColor": "#1e1f21",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
