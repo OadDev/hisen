@@ -1,13 +1,16 @@
 import { useEffect } from 'react'
 import { useUiStore } from '@/stores/ui-store'
+import { applyAccentTheme } from '@/lib/accent-themes'
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useUiStore((s) => s.theme)
+  const accentColor = useUiStore((s) => s.accentColor)
 
   useEffect(() => {
     const root = window.document.documentElement
     const apply = (t: 'light' | 'dark') => {
       root.classList.toggle('dark', t === 'dark')
+      applyAccentTheme(root, accentColor, t)
     }
 
     if (theme === 'system') {
@@ -19,7 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     apply(theme)
-  }, [theme])
+  }, [theme, accentColor])
 
   return <>{children}</>
 }

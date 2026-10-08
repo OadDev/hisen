@@ -11,14 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { useAuthStore } from '@/stores/auth-store'
 import { useUiStore } from '@/stores/ui-store'
+import { ACCENT_THEMES, type AccentColor } from '@/lib/accent-themes'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { initials } from '@/lib/utils'
-import { Save } from 'lucide-react'
+import { Save, Check } from 'lucide-react'
 
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user)
   const theme = useUiStore((s) => s.theme)
   const setTheme = useUiStore((s) => s.setTheme)
+  const accentColor = useUiStore((s) => s.accentColor)
+  const setAccentColor = useUiStore((s) => s.setAccentColor)
   const [notifications, setNotifications] = useState({ email: true, push: true, whatsapp: false, sms: false })
 
   return (
@@ -110,8 +113,11 @@ export function SettingsPage() {
 
         <TabsContent value="appearance" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Appearance</CardTitle></CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardHeader>
+              <CardTitle className="text-base">Appearance</CardTitle>
+              <CardDescription>Choose how Hisen Machinery looks on your device.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
               <div>
                 <Label className="mb-2 block">Theme</Label>
                 <div className="grid grid-cols-3 gap-3 max-w-md">
@@ -122,6 +128,27 @@ export function SettingsPage() {
                       className={`rounded-lg border p-3 text-sm font-medium capitalize transition-colors ${theme === t ? 'border-primary ring-1 ring-primary' : 'hover:bg-accent'}`}
                     >
                       {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="mb-2 block">Accent Color</Label>
+                <p className="mb-3 text-xs text-muted-foreground">Sets the highlight color used across buttons, links, and charts.</p>
+                <div className="grid grid-cols-2 gap-3 max-w-md sm:grid-cols-4">
+                  {(Object.entries(ACCENT_THEMES) as [AccentColor, typeof ACCENT_THEMES[AccentColor]][]).map(([key, { label, swatch }]) => (
+                    <button
+                      key={key}
+                      onClick={() => setAccentColor(key)}
+                      className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors ${accentColor === key ? 'border-primary ring-1 ring-primary' : 'hover:bg-accent'}`}
+                    >
+                      <span
+                        className="flex size-8 items-center justify-center rounded-full"
+                        style={{ backgroundColor: swatch }}
+                      >
+                        {accentColor === key && <Check className="size-4 text-white" strokeWidth={3} />}
+                      </span>
+                      <span className="text-xs font-medium">{label}</span>
                     </button>
                   ))}
                 </div>
