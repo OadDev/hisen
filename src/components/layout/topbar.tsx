@@ -81,7 +81,7 @@ export function Topbar() {
 
       <Breadcrumbs />
 
-      <div className="ml-auto flex items-center gap-1.5">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
         <Button
           variant="outline"
           size="sm"

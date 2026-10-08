@@ -35,13 +35,15 @@ export function Breadcrumbs() {
 
   if (crumbs.length === 0) return null
 
+  const lastCrumb = crumbs[crumbs.length - 1]
+
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
-      <Link to="/dashboard/executive" className="hover:text-foreground">
+    <nav className="flex min-w-0 items-center gap-1.5 overflow-hidden text-xs text-muted-foreground">
+      <Link to="/dashboard/executive" className="hidden shrink-0 hover:text-foreground sm:inline">
         Home
       </Link>
       {crumbs.map((crumb, idx) => (
-        <span key={idx} className="flex items-center gap-1.5">
+        <span key={idx} className="hidden shrink-0 items-center gap-1.5 sm:flex">
           <ChevronRight className="size-3" />
           {idx === crumbs.length - 1 || !crumb.to ? (
             <span className="text-foreground font-medium">{crumb.label}</span>
@@ -52,6 +54,7 @@ export function Breadcrumbs() {
           )}
         </span>
       ))}
+      <span className="truncate font-medium text-foreground sm:hidden">{lastCrumb.label}</span>
     </nav>
   )
 }
