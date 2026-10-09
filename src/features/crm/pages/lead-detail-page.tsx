@@ -43,15 +43,18 @@ export function LeadDetailPage() {
 
   const ownerName = lead.owner?.name ?? 'Unassigned'
 
-  const events: TimelineEvent[] = (lead.activities ?? []).map((a) => ({
-    id: String(a.id),
-    title: a.title,
-    description: a.description ?? undefined,
-    timestamp: a.occurredAt,
-    actor: a.actor?.name,
-    icon: ACTIVITY_ICONS[a.type],
-    tone: a.type === 'stage-change' ? 'success' : 'default',
-  }))
+  const events: TimelineEvent[] = (lead.activities ?? [])
+    .slice()
+    .sort((a, b) => +new Date(b.occurredAt) - +new Date(a.occurredAt))
+    .map((a) => ({
+      id: String(a.id),
+      title: a.title,
+      description: a.description ?? undefined,
+      timestamp: a.occurredAt,
+      actor: a.actor?.name,
+      icon: ACTIVITY_ICONS[a.type],
+      tone: a.type === 'stage-change' ? 'success' : 'default',
+    }))
 
   return (
     <div>
